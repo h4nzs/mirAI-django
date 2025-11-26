@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="text-center py-24 md:py-32">
+    <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight">
+        Discover Your Next Favorite Movie with
+        <span class="block text-blue-500">MirAI</span>
+    </h1>
+    <p class="mt-6 max-w-2xl mx-auto text-lg text-gray-400">
+        Let our intelligent assistant guide you through the world of cinema. Get personalized recommendations, explore trending movies, and build your perfect watchlist.
+    </p>
+    <div class="mt-8 flex justify-center gap-4">
+        <a href="{% url 'movies:list' %}"
+           class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition-colors duration-300">
+            Explore Movies
+        </a>
+        <a href="{% url 'movies:search' %}"
+           class="inline-block bg-slate-700 text-white font-bold py-3 px-8 rounded-full hover:bg-slate-600 transition-colors duration-300">
+            Search
+        </a>
+    </div>
+</div>
+{% endblock %}

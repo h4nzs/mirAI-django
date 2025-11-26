@@ -1,0 +1,48 @@
+{% comment %}
+File: templates/pages/search.html
+Description: Shows search results or a message if no results are found.
+{% endcomment %}
+{% extends "base.html" %}
+{% block title %}{% if query %}Results for '{{ query }}'{% else %}Search{% endif %}{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-white mb-8">
+    {% if query %}
+        Search Results for "{{ query }}"
+    {% else %}
+        Search for a movie
+    {% endif %}
+</h1>
+
+{% if query %}
+    {% if movies %}
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+            {% for movie in movies %}
+                {% include "components/movie_card.html" with movie=movie %}
+            {% endfor %}
+        </div>
+
+        {# Pagination Controls #}
+        <div class="mt-12 flex justify-center items-center space-x-4 text-white">
+            {% if pagination.has_previous %}
+                <a href="?query={{ query }}&page={{ pagination.current_page|add:'-1' }}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">&laquo; Previous</a>
+            {% endif %}
+
+            <span class="px-4 py-2">Page {{ pagination.current_page }} of {{ pagination.total_pages }}</span>
+
+            {% if pagination.has_next %}
+                <a href="?query={{ query }}&page={{ pagination.current_page|add:'1' }}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="text-center py-16 bg-slate-800 rounded-lg">
+            <p class="text-xl text-white">No results found for "{{ query }}"</p>
+            <p class="text-gray-400 mt-2">Please try a different search term.</p>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-16 bg-slate-800 rounded-lg">
+        <p class="text-gray-400">Use the search bar in the navigation to find a movie.</p>
+    </div>
+{% endif %}
+{% endblock %}
