@@ -1,5 +1,6 @@
 import json
 from django.http import JsonResponse
+from django.views.generic import TemplateView
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
@@ -7,6 +8,12 @@ from services.ai_google import AIGoogleService
 
 # An instance of our AI service
 ai_service = AIGoogleService()
+
+class ChatPageView(TemplateView):
+    """
+    A view to render the user-facing chat page UI.
+    """
+    template_name = "pages/chat.html"
 
 @csrf_exempt
 @require_POST

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Chat Advisor{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-[75vh] max-w-3xl mx-auto bg-slate-800 rounded-lg shadow-xl">
+    <!-- Header -->
+    <div class="p-4 border-b border-slate-700">
+        <h1 class="text-xl font-bold text-white text-center">MirAI Chat Advisor</h1>
+        <p class="text-sm text-center text-blue-400">Your personal movie assistant</p>
+    </div>
+
+    <!-- Message Display Area -->
+    <div id="message-list" class="flex-1 p-6 space-y-4 overflow-y-auto">
+        <!-- Initial Welcome Message -->
+        <div class="flex items-start gap-3">
+            <div class="bg-blue-600 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+            </div>
+            <div class="bg-slate-700 rounded-lg p-3 max-w-lg">
+                <p class="text-sm">Hello! I'm MirAI. How can I help you find the perfect movie today? You can ask me for recommendations like "find movies similar to Inception" or just have a general chat.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typing-indicator" class="px-6 pb-2 hidden">
+        <div class="flex items-start gap-3">
+            <div class="bg-blue-600 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+            </div>
+            <div class="bg-slate-700 rounded-lg p-3 max-w-lg flex items-center space-x-2">
+                <span class="text-sm text-gray-400">MirAI is typing</span>
+                <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0s;"></div>
+                <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Form -->
+    <div class="p-4 border-t border-slate-700">
+        <form id="chat-form" class="flex items-center gap-3">
+            <input type="text" id="chat-input" placeholder="Ask for a movie recommendation..."
+                   class="flex-1 bg-slate-700 border-slate-600 rounded-full py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   autocomplete="off">
+            <button type="submit" class="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const messageList = document.getElementById('message-list');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const submitButton = chatForm.querySelector('button[type="submit"]');
+
+        // Function to add a message to the UI
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            let messageContent = '';
+
+            if (sender === 'user') {
+                messageContent = `
+                    <div class="flex items-start gap-3 justify-end">
+                        <div class="bg-blue-600 rounded-lg p-3 max-w-lg">
+                            <p class="text-sm text-white">${text}</p>
+                        </div>
+                    </div>
+                `;
+            } else { // 'ai'
+                messageContent = `
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-600 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-3 max-w-lg">
+                            <p class="text-sm">${text}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            messageDiv.innerHTML = messageContent;
+            messageList.appendChild(messageDiv);
+            messageList.scrollTop = messageList.scrollHeight; // Scroll to bottom
+        }
+
+        // Handle form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userInput = chatInput.value.trim();
+            if (!userInput) return;
+
+            addMessage('user', userInput);
+            chatInput.value = '';
+            submitButton.disabled = true;
+            typingIndicator.classList.remove('hidden');
+
+            try {
+                const response = await fetch("{% url 'chat:api' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}' // Django CSRF token
+                    },
+                    body: JSON.stringify({ prompt: userInput, type: 'general' })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+
+                const data = await response.json();
+                
+                // Handle both structured (recommendation) and general chat responses
+                let aiResponseText = '';
+                if (data.response) {
+                    aiResponseText = data.response;
+                } else if (data.recommendations) {
+                    aiResponseText = "Here are some recommendations for you:<br><ul>" + 
+                                     data.recommendations.map(r => `<li><b>${r.title} (${r.year}):</b> ${r.reason}</li>`).join('') + 
+                                     "</ul>";
+                } else if (data.similar_movies) {
+                    aiResponseText = "You might also like these movies:<br><ul>" + 
+                                     data.similar_movies.map(r => `<li><b>${r.title} (${r.year})</b></li>`).join('') + 
+                                     "</ul>";
+                } else {
+                    throw new Error('Invalid response format from AI.');
+                }
+                
+                addMessage('ai', aiResponseText);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('ai', 'Sorry, I encountered an error. Please try again later.');
+            } finally {
+                submitButton.disabled = false;
+                typingIndicator.classList.add('hidden');
+                chatInput.focus();
+            }
+        });
+    });
+</script>
+{% endblock %}

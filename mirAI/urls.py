@@ -16,8 +16,8 @@ urlpatterns = [
     # URLs for the movies app will be prefixed with /movies/
     path('movies/', include('apps.movies.urls', namespace='movies')),
     
-    # URLs for the AI endpoints will be prefixed with /api/ai/
-    path('api/ai/', include('apps.ai.urls', namespace='ai')),
+    # URLs for the chat app will be prefixed with /chat/
+    path('chat/', include('apps.ai.urls', namespace='chat')),
 ]
 
 # This is helpful for serving static files during development

@@ -38,12 +38,12 @@ class AIGoogleService:
         
         # Model configured to specifically return JSON for structured data needs.
         self.json_model = genai.GenerativeModel(
-            'gemini-1.5-flash',
+            'gemini-flash-latest',
             generation_config={"response_mime_type": "application/json"}
         )
         
         # A separate model instance for handling general, freeform chat.
-        self.chat_model = genai.GenerativeModel('gemini-1.5-flash')
+        self.chat_model = genai.GenerativeModel('gemini-flash-latest')
 
     def _generate_json_response(self, prompt: str) -> Optional[Dict[str, Any]]:
         """

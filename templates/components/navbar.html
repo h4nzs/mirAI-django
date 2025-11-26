@@ -15,7 +15,7 @@ Description: The navigation bar component.
                 </a>
                 <div class="hidden md:flex items-baseline space-x-6">
                     <a href="{% url 'dashboard:home' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Dashboard</a>
-                    <a href="#" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
+                    <a href="{% url 'chat:page' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
                     <a href="{% url 'movies:trending' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
                     <a href="{% url 'movies:search' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
                 </div>
@@ -48,7 +48,7 @@ Description: The navigation bar component.
     <div :class="{'block': open, 'hidden': !open}" class="md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <a href="{% url 'dashboard:home' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Dashboard</a>
-            <a href="#" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
+            <a href="{% url 'chat:page' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
             <a href="{% url 'movies:trending' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
             <a href="{% url 'movies:search' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
         </div>
