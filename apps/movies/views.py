@@ -47,7 +47,7 @@ def discover_movies_view(request):
         }
     }
     
-    return render(request, 'movies/movie_list.html', context)
+    return render(request, 'pages/movie_list.html', context)
 
 
 def search_view(request):
@@ -72,7 +72,7 @@ def search_view(request):
             'has_next': movies_data.get('page', 1) < movies_data.get('total_pages', 1) if movies_data else False,
         } if movies_data else {}
     }
-    return render(request, 'movies/search.html', context)
+    return render(request, 'pages/search.html', context)
 
 
 def trending_movies_view(request):
@@ -92,7 +92,7 @@ def trending_movies_view(request):
             'has_next': movies_data.get('page', 1) < movies_data.get('total_pages', 1),
         } if movies_data else {}
     }
-    return render(request, 'movies/trending.html', context)
+    return render(request, 'pages/trending.html', context)
 
 
 def movie_detail_view(request, movie_id: int):
@@ -105,4 +105,4 @@ def movie_detail_view(request, movie_id: int):
         'page_title': movie_details.get('title', 'Movie Details') if movie_details else 'Movie not Found',
         'movie': movie_details
     }
-    return render(request, 'movies/movie_detail.html', context)
+    return render(request, 'pages/movie_detail.html', context)

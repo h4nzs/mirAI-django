@@ -1,7 +1,3 @@
-{% comment %}
-File: templates/pages/search.html
-Description: Shows search results or a message if no results are found.
-{% endcomment %}
 {% extends "base.html" %}
 {% block title %}{% if query %}Results for '{{ query }}'{% else %}Search{% endif %}{% endblock %}
 
