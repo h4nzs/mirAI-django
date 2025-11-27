@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from services.tmdb import TMDBService
+from movies.models import Watchlist
 
 # Create your views here.
 tmdb_service = TMDBService()
@@ -22,16 +24,21 @@ class HomePageView(TemplateView):
         
         return context
 
-class WatchlistPageView(TemplateView):
+class WatchlistPageView(LoginRequiredMixin, ListView):
     """
-    Serves the user's watchlist page. (Placeholder)
+    Displays the movies in the currently logged-in user's watchlist.
     """
-    template_name = "dashboard/watchlist.html"
+    model = Watchlist
+    template_name = 'dashboard/watchlist.html'
+    context_object_name = 'watchlist_items'
+
+    def get_queryset(self):
+        # Return the watchlist items for the current user
+        return Watchlist.objects.filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Watchlist'
-        context['watchlist_items'] = [] # Placeholder
         return context
 
 

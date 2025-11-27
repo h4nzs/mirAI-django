@@ -15,4 +15,8 @@ urlpatterns = [
     
     # Example: /movies/27205/
     path('<int:movie_id>/', views.movie_detail_view, name='detail'),
+
+    # Watchlist actions
+    path('watchlist/add/', views.add_to_watchlist, name='watchlist_add'),
+    path('watchlist/<int:movie_id>/remove/', views.remove_from_watchlist, name='watchlist_remove'),
 ]

@@ -10,6 +10,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # App-specific URLs
+    # Include authentication urls (login, logout, signup)
+    path('', include('core.urls')),
+    
     # The dashboard app will handle the root URLs (e.g., '/', '/watchlist/')
     path('', include('apps.dashboard.urls', namespace='dashboard')),
     

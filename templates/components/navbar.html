@@ -18,15 +18,28 @@ Description: The navigation bar component.
                     <a href="{% url 'chat:page' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
                     <a href="{% url 'movies:trending' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
                     <a href="{% url 'movies:search' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:watchlist' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Watchlist</a>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Search Form (Desktop) -->
-            <div class="hidden md:block">
+            <!-- Right side: Search, Auth -->
+            <div class="hidden md:flex items-center space-x-4">
+                <!-- Search Form (Desktop) -->
                 <form action="{% url 'movies:search' %}" method="get" class="relative">
-                    <input type="search" name="query" placeholder="Search for a movie..."
-                           class="bg-slate-700 text-white placeholder-gray-400 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+                    <input type="search" name="query" placeholder="Search..."
+                           class="bg-slate-700 text-white placeholder-gray-400 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-48">
                 </form>
+
+                <!-- Auth Links -->
+                {% if user.is_authenticated %}
+                    <span class="text-white">Hi, {{ user.username }}</span>
+                    <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Login</a>
+                    <a href="{% url 'signup' %}" class="bg-blue-600 px-4 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700">Sign Up</a>
+                {% endif %}
             </div>
 
             <!-- Hamburger Menu Button (Mobile) -->
@@ -51,13 +64,25 @@ Description: The navigation bar component.
             <a href="{% url 'chat:page' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
             <a href="{% url 'movies:trending' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
             <a href="{% url 'movies:search' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'dashboard:watchlist' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Watchlist</a>
+            {% endif %}
         </div>
-        <!-- Search Form (Mobile) -->
-        <div class="p-4">
+        <!-- Auth & Search (Mobile) -->
+        <div class="border-t border-slate-700 p-4 space-y-4">
             <form action="{% url 'movies:search' %}" method="get" class="relative">
                 <input type="search" name="query" placeholder="Search for a movie..."
                        class="bg-slate-700 text-white placeholder-gray-400 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
             </form>
+            <div class="flex items-center justify-around">
+                {% if user.is_authenticated %}
+                    <span class="text-white w-1/2 text-center">Hi, {{ user.username }}</span>
+                    <a href="{% url 'logout' %}" class="w-1/2 text-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="w-1/2 text-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Login</a>
+                    <a href="{% url 'signup' %}" class="w-1/2 text-center bg-blue-600 px-4 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700">Sign Up</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </nav>

@@ -1,6 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from services.tmdb import TMDBService
+from movies.models import Watchlist
 
 # Create your views here.
 tmdb_service = TMDBService()
@@ -100,9 +103,55 @@ def movie_detail_view(request, movie_id: int):
     Displays the detailed information for a single movie.
     """
     movie_details = tmdb_service.get_movie_details(movie_id)
-    
+    is_in_watchlist = False
+    if request.user.is_authenticated:
+        is_in_watchlist = Watchlist.objects.filter(user=request.user, movie_id=movie_id).exists()
+
     context = {
         'page_title': movie_details.get('title', 'Movie Details') if movie_details else 'Movie not Found',
-        'movie': movie_details
+        'movie': movie_details,
+        'is_in_watchlist': is_in_watchlist,
     }
     return render(request, 'pages/movie_detail.html', context)
+
+
+@require_POST
+@login_required
+def add_to_watchlist(request):
+    """
+    Adds a movie to the logged-in user's watchlist.
+    Expects movie details to be submitted via a POST form.
+    """
+    movie_id = request.POST.get('movie_id')
+    title = request.POST.get('title')
+    poster_path = request.POST.get('poster_path')
+    release_year_str = request.POST.get('release_year')
+
+    release_year = None
+    if release_year_str and release_year_str.isdigit():
+        release_year = int(release_year_str)
+
+    if movie_id and title:
+        Watchlist.objects.get_or_create(
+            user=request.user,
+            movie_id=int(movie_id),
+            defaults={
+                'title': title,
+                'poster_path': poster_path,
+                'release_year': release_year,
+            }
+        )
+    
+    # Redirect back to the previous page, or home if referrer is not available
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard:home'))
+
+
+@require_POST
+@login_required
+def remove_from_watchlist(request, movie_id: int):
+    """
+    Removes a movie from the logged-in user's watchlist.
+    """
+    Watchlist.objects.filter(user=request.user, movie_id=movie_id).delete()
+    # Redirect back to the previous page, or home if referrer is not available
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard:home'))
