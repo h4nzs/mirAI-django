@@ -5,9 +5,11 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from services.ai_google import AIGoogleService
+from services.tmdb import TMDBService
 
-# An instance of our AI service
+# An instance of our services
 ai_service = AIGoogleService()
+tmdb_service = TMDBService()
 
 class ChatPageView(TemplateView):
     """
@@ -20,9 +22,7 @@ class ChatPageView(TemplateView):
 def chat_endpoint(request):
     """
     A view that acts as a JSON API endpoint for the AI service.
-    It expects a POST request with a JSON body containing 'prompt' and 'type'.
-    
-    'type' can be one of: 'recommendation', 'similar', 'general'.
+    It enriches AI recommendations with full movie details from TMDB.
     """
     try:
         data = json.loads(request.body)
@@ -34,13 +34,24 @@ def chat_endpoint(request):
 
         response_data = None
         if chat_type == 'recommendation':
-            # For queries like "find movies similar to..."
             response_data = ai_service.get_recommendations(prompt)
         elif chat_type == 'similar':
-            # For a single movie title to find similar ones
-            response_data = ai_service.suggest_similar_movies(prompt)
+            # Get initial suggestions from AI
+            ai_suggestions = ai_service.suggest_similar_movies(prompt)
+            
+            # Enrich the suggestions with full TMDB details
+            if ai_suggestions and 'similar_movies' in ai_suggestions:
+                enriched_movies = []
+                for movie_suggestion in ai_suggestions['similar_movies']:
+                    if 'tmdb_id' in movie_suggestion:
+                        # Fetch full details using the ID
+                        movie_details = tmdb_service.get_movie_details(movie_suggestion['tmdb_id'])
+                        if movie_details:
+                            enriched_movies.append(movie_details)
+                response_data = {'similar_movies': enriched_movies}
+            else:
+                response_data = ai_suggestions # Fallback if enrichment fails
         else: # 'general'
-            # For general conversation
             response_data = ai_service.general_chat(prompt)
 
         if response_data:

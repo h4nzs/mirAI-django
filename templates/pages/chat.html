@@ -59,7 +59,7 @@
         const submitButton = chatForm.querySelector('button[type="submit"]');
 
         // Function to add a message to the UI
-        function addMessage(sender, text) {
+        function addMessage(sender, text, isCard = false) {
             const messageDiv = document.createElement('div');
             let messageContent = '';
 
@@ -72,16 +72,29 @@
                     </div>
                 `;
             } else { // 'ai'
-                messageContent = `
-                    <div class="flex items-start gap-3">
-                        <div class="bg-blue-600 p-2 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+                if (isCard) {
+                    // For rich responses like movie carousels, don't wrap in a bubble
+                    messageContent = `
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-600 p-2 rounded-full self-start mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+                            </div>
+                            <div class="w-full">${text}</div>
                         </div>
-                        <div class="bg-slate-700 rounded-lg p-3 max-w-lg">
-                            <p class="text-sm">${text}</p>
+                    `;
+                } else {
+                    // For standard text responses
+                    messageContent = `
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-600 p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m0-16a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+                            </div>
+                            <div class="bg-slate-700 rounded-lg p-3 max-w-lg">
+                                <p class="text-sm">${text}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             }
             messageDiv.innerHTML = messageContent;
             messageList.appendChild(messageDiv);
@@ -99,6 +112,22 @@
             submitButton.disabled = true;
             typingIndicator.classList.remove('hidden');
 
+            // --- New Logic to Determine Chat Type (Bilingual) ---
+            let chat_type = 'general';
+            const lowerInput = userInput.toLowerCase();
+            
+            // Keywords for recommendation
+            const recommendKeywords = ['recommend', 'suggest', 'find me', 'looking for', 'rekomendasi', 'sarankan', 'carikan'];
+            // Keywords for similarity
+            const similarKeywords = ['similar to', 'like', 'seperti', 'mirip'];
+
+            if (recommendKeywords.some(key => lowerInput.includes(key))) {
+                chat_type = 'recommendation';
+            } else if (similarKeywords.some(key => lowerInput.includes(key))) {
+                chat_type = 'similar';
+            }
+            // ----------------------------------------------------
+
             try {
                 const response = await fetch("{% url 'chat:api' %}", {
                     method: 'POST',
@@ -106,7 +135,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}' // Django CSRF token
                     },
-                    body: JSON.stringify({ prompt: userInput, type: 'general' })
+                    body: JSON.stringify({ prompt: userInput, type: chat_type }) // Use dynamic chat_type
                 });
 
                 if (!response.ok) {
@@ -117,21 +146,43 @@
                 
                 // Handle both structured (recommendation) and general chat responses
                 let aiResponseText = '';
-                if (data.response) {
-                    aiResponseText = data.response;
+                let isCardResponse = false;
+
+                if (data.similar_movies && data.similar_movies.length > 0) {
+                    isCardResponse = true;
+                    aiResponseText = `
+                        <p class="text-sm mb-4">Tentu, ini beberapa film yang mungkin kamu suka:</p>
+                        <div class="carousel carousel-center w-full space-x-4">
+                            ${data.similar_movies.map(movie => `
+                                <div class="carousel-item w-40">
+                                    <div class="group relative bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-blue-500/20 transition-shadow duration-300">
+                                        <a href="/movies/${movie.id}/">
+                                            <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" 
+                                                alt="${movie.title} Poster" 
+                                                class="w-full h-auto object-cover group-hover:opacity-75"
+                                                onerror="this.onerror=null;this.src='https://via.placeholder.com/500x750/1e293b/94a3b8?text=No+Image';">
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                            <div class="absolute bottom-0 left-0 p-2">
+                                                <h3 class="text-white text-xs font-bold">${movie.title}</h3>
+                                                <p class="text-gray-400 text-xs">${movie.release_date ? movie.release_date.substring(0, 4) : ''}</p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
                 } else if (data.recommendations) {
-                    aiResponseText = "Here are some recommendations for you:<br><ul>" + 
+                     aiResponseText = "Here are some recommendations for you:<br><ul>" + 
                                      data.recommendations.map(r => `<li><b>${r.title} (${r.year}):</b> ${r.reason}</li>`).join('') + 
                                      "</ul>";
-                } else if (data.similar_movies) {
-                    aiResponseText = "You might also like these movies:<br><ul>" + 
-                                     data.similar_movies.map(r => `<li><b>${r.title} (${r.year})</b></li>`).join('') + 
-                                     "</ul>";
+                } else if (data.response) {
+                    aiResponseText = data.response;
                 } else {
                     throw new Error('Invalid response format from AI.');
                 }
                 
-                addMessage('ai', aiResponseText);
+                addMessage('ai', aiResponseText, isCardResponse);
 
             } catch (error) {
                 console.error('Error:', error);
