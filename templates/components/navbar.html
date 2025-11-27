@@ -1,88 +1,38 @@
-{% comment %}
-File: templates/components/navbar.html
-Description: The navigation bar component.
-- Dark theme with a blue accent for the logo.
-- Includes main navigation links and a search form.
-- Fully responsive with a hamburger menu for mobile, powered by Alpine.js.
-{% endcomment %}
-<nav class="bg-slate-800/80 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-700/50" x-data="{ open: false }">
-    <div class="container mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
-            <!-- Logo and Main Links -->
-            <div class="flex items-center space-x-8">
-                <a href="{% url 'dashboard:home' %}" class="text-2xl font-bold text-white">
-                    Mir<span class="text-blue-500">AI</span>
-                </a>
-                <div class="hidden md:flex items-baseline space-x-6">
-                    <a href="{% url 'dashboard:home' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Dashboard</a>
-                    <a href="{% url 'chat:page' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
-                    <a href="{% url 'movies:trending' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
-                    <a href="{% url 'movies:search' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
-                    {% if user.is_authenticated %}
-                    <a href="{% url 'dashboard:watchlist' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Watchlist</a>
-                    {% endif %}
+<header class="h-16 flex-shrink-0 bg-slate-900/70 backdrop-blur-sm border-b border-slate-700/50 flex items-center justify-between px-4 sm:px-6 md:px-8">
+    <!-- Left side: Hamburger menu (mobile) & Search -->
+    <div class="flex items-center space-x-4">
+        <button @click="sidebarOpen = !sidebarOpen" class="md:hidden btn btn-square btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+
+        <form action="{% url 'movies:search' %}" method="get" class="relative hidden sm:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input type="search" name="query" placeholder="Search movies..." class="input w-full max-w-xs pl-10 focus:ring-2 focus:ring-indigo-500/50 bg-slate-800">
+        </form>
+    </div>
+
+    <!-- Right side: User Profile -->
+    <div class="flex items-center space-x-4">
+        {% if user.is_authenticated %}
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div class="w-10 rounded-full bg-indigo-500">
+                    <span class="text-xl text-white">{{ user.username|first|upper }}</span>
                 </div>
-            </div>
-
-            <!-- Right side: Search, Auth -->
-            <div class="hidden md:flex items-center space-x-4">
-                <!-- Search Form (Desktop) -->
-                <form action="{% url 'movies:search' %}" method="get" class="relative">
-                    <input type="search" name="query" placeholder="Search..."
-                           class="bg-slate-700 text-white placeholder-gray-400 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-48">
-                </form>
-
-                <!-- Auth Links -->
-                {% if user.is_authenticated %}
-                    <span class="text-white">Hi, {{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Login</a>
-                    <a href="{% url 'signup' %}" class="bg-blue-600 px-4 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700">Sign Up</a>
-                {% endif %}
-            </div>
-
-            <!-- Hamburger Menu Button (Mobile) -->
-            <div class="md:hidden flex items-center">
-                <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-                    <span class="sr-only">Open main menu</span>
-                    <svg :class="{'hidden': open, 'block': !open }" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    <svg :class="{'block': open, 'hidden': !open }" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a href="{% url 'dashboard:watchlist' %}">My Watchlist</a></li>
+                <li>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Logout</button>
+                    </form>
+                </li>
+            </ul>
         </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
+            <a href="{% url 'signup' %}" class="btn btn-primary">Sign Up</a>
+        {% endif %}
     </div>
-
-    <!-- Mobile Menu -->
-    <div :class="{'block': open, 'hidden': !open}" class="md:hidden">
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="{% url 'dashboard:home' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Dashboard</a>
-            <a href="{% url 'chat:page' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Chat Advisor</a>
-            <a href="{% url 'movies:trending' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Trending</a>
-            <a href="{% url 'movies:search' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Search</a>
-            {% if user.is_authenticated %}
-            <a href="{% url 'dashboard:watchlist' %}" class="block px-3 py-2 rounded-md font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Watchlist</a>
-            {% endif %}
-        </div>
-        <!-- Auth & Search (Mobile) -->
-        <div class="border-t border-slate-700 p-4 space-y-4">
-            <form action="{% url 'movies:search' %}" method="get" class="relative">
-                <input type="search" name="query" placeholder="Search for a movie..."
-                       class="bg-slate-700 text-white placeholder-gray-400 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-            </form>
-            <div class="flex items-center justify-around">
-                {% if user.is_authenticated %}
-                    <span class="text-white w-1/2 text-center">Hi, {{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="w-1/2 text-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="w-1/2 text-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-slate-700 hover:text-white">Login</a>
-                    <a href="{% url 'signup' %}" class="w-1/2 text-center bg-blue-600 px-4 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</nav>
+</header>

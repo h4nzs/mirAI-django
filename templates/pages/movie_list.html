@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layout/app_layout.html" %}
 {% block title %}Discover Movies{% endblock %}
 
 {% block content %}
@@ -48,13 +48,13 @@
     {# Pagination Controls #}
     <div class="mt-12 flex justify-center items-center space-x-4 text-white">
         {% if pagination.has_previous %}
-            <a href="?page={{ pagination.current_page|add:'-1' }}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">&laquo; Previous</a>
+            <a href="?page={{ pagination.current_page|add:'-1' }}{% if selected_filters.genre %}&genre={{ selected_filters.genre }}{% endif %}{% if selected_filters.year %}&year={{ selected_filters.year }}{% endif %}{% if selected_filters.rating %}&rating={{ selected_filters.rating }}{% endif %}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">&laquo; Previous</a>
         {% endif %}
 
         <span class="px-4 py-2">Page {{ pagination.current_page }} of {{ pagination.total_pages }}</span>
 
         {% if pagination.has_next %}
-            <a href="?page={{ pagination.current_page|add:'1' }}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">Next &raquo;</a>
+            <a href="?page={{ pagination.current_page|add:'1' }}{% if selected_filters.genre %}&genre={{ selected_filters.genre }}{% endif %}{% if selected_filters.year %}&year={{ selected_filters.year }}{% endif %}{% if selected_filters.rating %}&rating={{ selected_filters.rating }}{% endif %}" class="px-4 py-2 bg-slate-700 rounded-md hover:bg-blue-600 transition-colors">Next &raquo;</a>
         {% endif %}
     </div>
 

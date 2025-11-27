@@ -100,17 +100,26 @@ def trending_movies_view(request):
 
 def movie_detail_view(request, movie_id: int):
     """
-    Displays the detailed information for a single movie.
+    Displays the detailed information for a single movie and finds the official trailer.
     """
     movie_details = tmdb_service.get_movie_details(movie_id)
     is_in_watchlist = False
     if request.user.is_authenticated:
         is_in_watchlist = Watchlist.objects.filter(user=request.user, movie_id=movie_id).exists()
 
+    # Find the official trailer from the video results
+    trailer = None
+    if movie_details and 'videos' in movie_details and 'results' in movie_details['videos']:
+        for video in movie_details['videos']['results']:
+            if video['type'] == 'Trailer' and video['official']:
+                trailer = video
+                break # Stop after finding the first official trailer
+    
     context = {
         'page_title': movie_details.get('title', 'Movie Details') if movie_details else 'Movie not Found',
         'movie': movie_details,
         'is_in_watchlist': is_in_watchlist,
+        'trailer': trailer,
     }
     return render(request, 'pages/movie_detail.html', context)
 

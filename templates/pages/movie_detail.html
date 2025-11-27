@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layout/app_layout.html" %}
 {% block title %}{{ movie.title }}{% endblock %}
 
 {% block content %}
@@ -79,7 +79,6 @@
             </div>
 
             <!-- Main Trailer -->
-            {% with trailer=movie.videos.results|selectattr:"type"|"equalto":"Trailer"|first %}
             {% if trailer %}
             <div class="mt-8">
                 <h2 class="text-2xl font-bold border-b-2 border-slate-700 pb-2 mb-4">Trailer</h2>
@@ -88,7 +87,6 @@
                 </div>
             </div>
             {% endif %}
-            {% endwith %}
 
             <!-- Cast -->
             <div class="mt-8">

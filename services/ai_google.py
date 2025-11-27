@@ -117,15 +117,16 @@ class AIGoogleService:
         A user wants to find movies that are similar to "{movie_title}".
         
         Provide a list of 5 movies that are similar in genre, theme, or style.
+        IMPORTANT: You must find the correct TMDB ID for each movie.
         
         Your response MUST be a valid JSON object with a single key "similar_movies".
-        The value must be an array of objects, each with a "title" and "year".
+        The value must be an array of objects, each with a "title", "year", and "tmdb_id".
         
         Example response format:
         {{
           "similar_movies": [
-            {{ "title": "Similar Movie 1", "year": 2020 }},
-            {{ "title": "Similar Movie 2", "year": 2018 }}
+            {{ "title": "Similar Movie 1", "year": 2020, "tmdb_id": 12345 }},
+            {{ "title": "Similar Movie 2", "year": 2018, "tmdb_id": 67890 }}
           ]
         }}
         """
