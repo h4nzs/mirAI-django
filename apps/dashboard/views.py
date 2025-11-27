@@ -1,3 +1,5 @@
+import json
+import re
 from django.shortcuts import render
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -22,21 +24,33 @@ def home(request):
         # Get AI recommendations based on the latest watchlist item
         latest_watchlist_item = Watchlist.objects.filter(user=request.user).first()
         if latest_watchlist_item:
-            ai_suggestions = ai_service.suggest_similar_movies(latest_watchlist_item.title)
-            if ai_suggestions and 'similar_movies' in ai_suggestions:
-                # Fetch full details for each AI suggestion
-                for suggestion in ai_suggestions['similar_movies'][:5]: # Limit to 5
-                    if 'tmdb_id' in suggestion:
-                        details = tmdb_service.get_movie_details(suggestion['tmdb_id'])
-                        if details:
-                            ai_recommendations.append(details)
-        
-        # If no AI recommendations could be generated (e.g., empty watchlist), show popular movies instead.
+            prompt = f"Based on the movie '{latest_watchlist_item.title}', suggest 5 similar movies. You must respond with only a JSON object."
+            ai_response_text = ai_service.get_conversational_response(history=[], new_prompt=prompt)
+            
+            # Clean and parse the response
+            cleaned_json_str = ai_response_text
+            if '```json' in ai_response_text:
+                match = re.search(r"```json\s*(\{.*?\})\s*```", ai_response_text, re.DOTALL)
+                if match:
+                    cleaned_json_str = match.group(1)
+
+            try:
+                parsed_json = json.loads(cleaned_json_str)
+                if isinstance(parsed_json, dict) and 'recommendations' in parsed_json:
+                    for movie_suggestion in parsed_json['recommendations'][:5]:
+                        if 'tmdb_id' in movie_suggestion:
+                            details = tmdb_service.get_movie_details(movie_suggestion['tmdb_id'])
+                            if details:
+                                ai_recommendations.append(details)
+            except json.JSONDecodeError:
+                # AI didn't return valid JSON, so we'll fall back gracefully
+                pass
+
+        # If no AI recommendations could be generated, show popular movies instead.
         if not ai_recommendations:
             popular_data = tmdb_service.get_popular_movies()
             if popular_data and 'results' in popular_data:
                 ai_recommendations = popular_data['results'][:5]
-
 
         context = {
             'page_title': 'Dashboard',
