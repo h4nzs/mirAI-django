@@ -21,14 +21,13 @@ GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
 class AIGoogleService:
     """
     A service class for interacting with the Google AI (Gemini) API.
-    This service is responsible for handling all AI-powered features,
-    such as movie recommendations and chat.
+    This service uses a conversational approach to provide movie recommendations.
     """
 
     def __init__(self):
         """
         Initializes the AIGoogleService, configures the API key, and sets up
-        the generative models.
+        the conversational model with a system instruction.
         """
         if not GOOGLE_AI_API_KEY:
             logger.error("GOOGLE_AI_API_KEY environment variable not set.")
@@ -36,125 +35,45 @@ class AIGoogleService:
         
         genai.configure(api_key=GOOGLE_AI_API_KEY)
         
-        # Model configured to specifically return JSON for structured data needs.
-        self.json_model = genai.GenerativeModel(
-            'gemini-flash-latest',
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        # A separate model instance for handling general, freeform chat.
-        self.chat_model = genai.GenerativeModel('gemini-flash-latest')
+        system_instruction = """You are MirAI, a conversational movie recommendation expert. Your goal is to help users find the perfect movie by having a natural conversation.
 
-    def _generate_json_response(self, prompt: str) -> Optional[Dict[str, Any]]:
+RULES:
+1.  INFORMATION GATHERING: If the user's request is vague (e.g., "find me a movie", "rekomendasikan film"), your first priority is to ask clarifying questions. Ask about genre, actors, director, mood, or similar movies. Do NOT recommend movies until you have enough specific information (e.g., at least a genre and an actor, or a movie to compare to).
+2.  JSON TRIGGER: Once you believe you have gathered enough specific information to make good recommendations, your response MUST BE ONLY a valid JSON object and nothing else. This JSON object should contain a single key "recommendations". The value must be an array of 5 objects, where each object has the keys "title", "year", and "tmdb_id".
+3.  NORMAL CONVERSATION: For all other conversation (greetings, follow-up discussion after recommendations, or if the user is just chatting), just respond as a friendly, helpful, and conversational AI movie assistant in the user's language. Do not output JSON in this case.
+
+JSON FORMAT EXAMPLE:
+{
+  "recommendations": [
+    { "title": "Blade Runner 2049", "year": 2017, "tmdb_id": 335984 },
+    { "title": "Ex Machina", "year": 2014, "tmdb_id": 264660 }
+  ]
+}"""
+
+        self.model = genai.GenerativeModel(
+            model_name='gemini-flash-latest',
+            system_instruction=system_instruction
+        )
+
+    def get_conversational_response(self, history: list, new_prompt: str) -> str:
         """
-        A private helper method to generate content and parse the JSON response.
+        Gets a conversational response from the AI, providing chat history for context.
 
         Args:
-            prompt (str): The prompt to send to the generative model.
+            history (list): A list of previous chat messages.
+            new_prompt (str): The new message from the user.
 
         Returns:
-            Optional[Dict[str, Any]]: A Python dictionary parsed from the JSON response,
-                                      or None if an error occurs.
+            str: The AI's response, which could be plain text or a JSON string.
         """
         try:
-            response = self.json_model.generate_content(prompt)
-            # The response text is expected to be a valid JSON string.
-            return json.loads(response.text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON from AI response: {e}")
-            raw_text = getattr(response, 'text', 'N/A')
-            logger.error(f"Raw AI response was: {raw_text}")
-            return None
+            chat = self.model.start_chat(history=history)
+            response = chat.send_message(new_prompt)
+            return response.text
         except Exception as e:
             logger.error(f"An unexpected error occurred with Google AI API: {e}")
-            return None
+            return "Sorry, I'm having trouble connecting to my brain right now. Please try again in a moment."
 
-    def get_recommendations(self, movie_query: str) -> Optional[Dict[str, Any]]:
-        """
-        Generates movie recommendations based on a natural language query from a user.
-
-        Args:
-            movie_query (str): The user's request (e.g., "movies like Blade Runner").
-
-        Returns:
-            A dictionary containing a list of recommended movies, or None.
-        """
-        prompt = f"""
-        You are a movie recommendation expert named MirAI.
-        A user is looking for movies. Their request is: "{movie_query}".
-        
-        Analyze the user's request and provide 5 relevant movie recommendations.
-        For each movie, include the title, estimated year of release, and a brief, compelling reason for the recommendation.
-        
-        Your response MUST be a valid JSON object with a single key "recommendations".
-        The value of "recommendations" must be an array of objects, where each object has the keys "title", "year", and "reason".
-        
-        Example response format:
-        {{
-          "recommendations": [
-            {{
-              "title": "Example Movie 1",
-              "year": 2021,
-              "reason": "This movie fits your request because of its similar themes and visual style."
-            }}
-          ]
-        }}
-        """
-        return self._generate_json_response(prompt)
-
-    def suggest_similar_movies(self, movie_title: str) -> Optional[Dict[str, Any]]:
-        """
-        Suggests movies that are similar to a given movie title.
-
-        Args:
-            movie_title (str): The title of the movie to find similarities for.
-
-        Returns:
-            A dictionary containing a list of similar movies, or None.
-        """
-        prompt = f"""
-        You are a movie recommendation expert named MirAI.
-        A user wants to find movies that are similar to "{movie_title}".
-        
-        Provide a list of 5 movies that are similar in genre, theme, or style.
-        IMPORTANT: You must find the correct TMDB ID for each movie.
-        
-        Your response MUST be a valid JSON object with a single key "similar_movies".
-        The value must be an array of objects, each with a "title", "year", and "tmdb_id".
-        
-        Example response format:
-        {{
-          "similar_movies": [
-            {{ "title": "Similar Movie 1", "year": 2020, "tmdb_id": 12345 }},
-            {{ "title": "Similar Movie 2", "year": 2018, "tmdb_id": 67890 }}
-          ]
-        }}
-        """
-        return self._generate_json_response(prompt)
-
-    def general_chat(self, prompt: str) -> Optional[Dict[str, Any]]:
-        """
-        Handles general, non-structured chat with the user, acting as a friendly AI assistant.
-
-        Args:
-            prompt (str): The user's chat message.
-
-        Returns:
-            A dictionary containing the AI's text response, or None.
-        """
-        full_prompt = f"""
-        You are a helpful and friendly movie-loving assistant named MirAI.
-        Engage in a friendly and conversational way with the user. Do not try to output JSON.
-        
-        User's message: "{prompt}"
-        """
-        try:
-            response = self.chat_model.generate_content(full_prompt)
-            # We return a dict to maintain a consistent return type across the service.
-            return {"response": response.text}
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during general chat: {e}")
-            return None
 
 # --- Example Usage (for direct testing of this script) ---
 # if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import json
+import re
 from django.http import JsonResponse
 from django.views.generic import TemplateView
 from django.views.decorators.http import require_POST
@@ -21,45 +22,51 @@ class ChatPageView(TemplateView):
 @require_POST
 def chat_endpoint(request):
     """
-    A view that acts as a JSON API endpoint for the AI service.
-    It enriches AI recommendations with full movie details from TMDB.
+    A view that acts as a JSON API endpoint for the conversational AI service.
+    It passes chat history to the AI and lets the AI decide when to return
+    structured data (JSON) for recommendations.
     """
     try:
         data = json.loads(request.body)
+        history = data.get('history', [])
         prompt = data.get('prompt')
-        chat_type = data.get('type', 'general')
 
         if not prompt:
             return JsonResponse({'error': 'Prompt is required.'}, status=400)
 
-        response_data = None
-        if chat_type == 'recommendation':
-            response_data = ai_service.get_recommendations(prompt)
-        elif chat_type == 'similar':
-            # Get initial suggestions from AI
-            ai_suggestions = ai_service.suggest_similar_movies(prompt)
+        # Get the raw response from the AI (could be text or a JSON string)
+        ai_response_text = ai_service.get_conversational_response(history, prompt)
+
+        # --- New: Clean the response to extract JSON from Markdown blocks ---
+        cleaned_json_str = ai_response_text
+        if '```json' in ai_response_text:
+            match = re.search(r"```json\s*(\{.*?\})\s*```", ai_response_text, re.DOTALL)
+            if match:
+                cleaned_json_str = match.group(1)
+        # --------------------------------------------------------------------
+
+        try:
+            # Try to parse the (potentially cleaned) response as JSON
+            parsed_json = json.loads(cleaned_json_str)
             
-            # Enrich the suggestions with full TMDB details
-            if ai_suggestions and 'similar_movies' in ai_suggestions:
+            # If it's JSON and contains recommendations, enrich them
+            if isinstance(parsed_json, dict) and 'recommendations' in parsed_json:
                 enriched_movies = []
-                for movie_suggestion in ai_suggestions['similar_movies']:
+                for movie_suggestion in parsed_json['recommendations']:
                     if 'tmdb_id' in movie_suggestion:
-                        # Fetch full details using the ID
                         movie_details = tmdb_service.get_movie_details(movie_suggestion['tmdb_id'])
                         if movie_details:
                             enriched_movies.append(movie_details)
-                response_data = {'similar_movies': enriched_movies}
-            else:
-                response_data = ai_suggestions # Fallback if enrichment fails
-        else: # 'general'
-            response_data = ai_service.general_chat(prompt)
+                
+                # Return the final, enriched data
+                return JsonResponse({'recommendations': enriched_movies})
+            
+            # If it's valid JSON but not the format we want, return it directly
+            return JsonResponse(parsed_json)
 
-        if response_data:
-            return JsonResponse(response_data)
-        else:
-            return JsonResponse({'error': 'Failed to get a response from the AI service.'}, status=500)
+        except json.JSONDecodeError:
+            # If cleaning fails or it was never JSON, it's a regular text response
+            return JsonResponse({'response': ai_response_text})
 
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON in request body.'}, status=400)
     except Exception as e:
         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
